@@ -57,3 +57,29 @@ ubuntu         20.04-amd64   e3cfd8327073   17 minutes ago   1.71GB
 ubuntu         22.04-amd64   421fc02613ce   6 hours ago      1.57GB
 ubuntu         18.04-amd64   1bebec6d1c79   3 days ago       2.05GB
 ```
+
+## How to export docker image
+
+1. Save Docker Image as a Tar File
+
+```bash
+docker save -o <output-file>.tar <image-name>:<tag>
+```
+
+For example, to save the ubuntu:20.04 image as ubuntu20.04-arm64.tar:
+
+```bash
+docker save -o ubuntu20.04-amd64.tar ubuntu:20.04-amd64
+```
+
+2. Load the Tar File into Docker
+
+```bash
+docker load -i <input-file>.tar
+```
+
+For example:
+
+```bash
+docker load -i ubuntu20.04.tar
+```
