@@ -1,0 +1,144 @@
+# Dockerfile for building a cross developing environment.
+#
+# (c) 2024-2025 by neardi-dev <neardi-dev@neardi.com>
+#
+# To build the environment invoke
+#
+# $ docker build -q -t ubuntu:$(@:amd64-%=%)-amd64 -f amd64/amd64-$(@:amd64-%=%) .
+#
+# Note that Docker requires a relatively recent Linux kernel.
+# 3.8 is the current minimum.
+#
+
+FROM ubuntu:18.04
+MAINTAINER neardi-dev "neardi-dev@neardi.com"
+
+ENV DEBIAN_FRONTEND=noninteractive
+ENV TZ=Asia/Shanghai
+ENV USER=$(whoami)
+
+#RUN echo "deb http://mirrors.163.com/ubuntu/ bionic main restricted universe multiverse" > /etc/apt/sources.list
+#RUN echo "deb http://mirrors.163.com/ubuntu/ bionic-security main restricted universe multiverse" >> /etc/apt/sources.list
+#RUN echo "deb http://mirrors.163.com/ubuntu/ bionic-updates main restricted universe multiverse" >> /etc/apt/sources.list
+#RUN echo "deb http://mirrors.163.com/ubuntu/ bionic-backports main restricted universe multiverse" >> /etc/apt/sources.list
+
+RUN apt-get update && \
+    apt-get install -y \
+       apt-utils \
+       autoconf \
+       bash-completion \
+       bc \
+       bison \
+       build-essential \
+       ccache \
+       cmake \
+       curl \
+       cpio \
+       debootstrap \
+       device-tree-compiler \
+       dosfstools \
+       flex \
+       git \
+       gperf \
+       gnupg \
+       libncurses5-dev \
+       libgl1-mesa-dev \
+       libxml2-utils \
+       libssl-dev  \
+       locales \
+       lunzip \
+       mtools \
+       net-tools \
+       parted \
+       pkg-config \
+       pxz \
+       rsync \
+       sudo  \
+       unzip \
+       vim \
+       wget \
+       zip \
+       zlib1g-dev && \
+    apt-get autoclean
+
+RUN locale-gen en_US.UTF-8
+
+ENV LANG=en_US.UTF-8 \
+    LANGUAGE=en_US:en \
+    LC_ALL=en_US.UTF-8
+
+# install cross build toolchain
+RUN apt-get install -y \
+    crossbuild-essential-armhf \
+    crossbuild-essential-arm64
+
+
+RUN apt-get install -y \
+        python && \
+    apt-get autoclean
+
+RUN apt-get install -y \
+        qemu-user-static \
+        live-build && \
+    apt-get autoclean
+
+# build atf
+RUN apt-get install -y \
+        gcc-arm-none-eabi && \
+    apt-get autoclean
+
+# build uboot.its
+RUN apt-get install -y \
+        python-pyelftools && \
+    apt-get autoclean
+
+# build kernel.lz4
+RUN apt-get install -y \
+        liblz4-tool \
+        liblz4-dev && \
+    apt-get autoclean
+
+
+# build android
+RUN apt-get install -y \
+        python3 && \
+    apt-get autoclean
+
+# build buildroot
+RUN apt-get install -y \
+       gawk \
+       time \
+       texinfo \
+       expect &&\
+    apt-get autoclean
+
+########################################################################
+## use no-root user amd64
+########################################################################
+
+# create cross-build user amd64
+RUN useradd -c 'cross-build-user' -m -d /home/amd64 -s /bin/bash amd64
+RUN usermod -a -G sudo amd64
+
+# default username, can be override by docker run environment variables
+#ENV USER=amd64 \
+#    HOME=/home/amd64
+
+# Enable passwordless sudo for users under the "sudo" group
+RUN sed -i -e \
+      's/%sudo\s\+ALL=(ALL\(:ALL\)\?)\s\+ALL/%sudo ALL=NOPASSWD:ALL/g' \
+      /etc/sudoers
+
+RUN echo neardi ALL=NOPASSWD:ALL >> /etc/sudoers
+RUN echo yangyonghao ALL=NOPASSWD:ALL >> /etc/sudoers
+RUN echo wangxiaocan ALL=NOPASSWD:ALL >> /etc/sudoers
+RUN echo liukuangjie ALL=NOPASSWD:ALL >> /etc/sudoers
+RUN echo wumingfeng ALL=NOPASSWD:ALL >> /etc/sudoers
+RUN echo sundongya ALL=NOPASSWD:ALL >> /etc/sudoers
+RUN echo xiashiliang ALL=NOPASSWD:ALL >> /etc/sudoers
+RUN echo xuzhenhua ALL=NOPASSWD:ALL >> /etc/sudoers
+
+USER amd64
+
+RUN git config --global user.email "neardi-dev@neardi.com"
+RUN git config --global user.name "neardi-dev"

@@ -1,0 +1,49 @@
+#!/bin/bash
+
+set -ex
+
+# usage: docker-run.sh [repository] [tag] [arch] [cmd]
+
+# Default values
+default_repository="ubuntu"
+default_tag="20.04-amd64"
+default_arch="amd64"
+
+# Extract distro from default_tag
+default_distro=$(echo $default_tag | cut -d'-' -f1 | tr -d '.')
+
+# Assign parameters or use default values
+repository=${1:-$default_repository}
+tag=${2:-$default_tag}
+arch=${3:-$default_arch}
+cmd=${4}
+
+# Extract distro from the provided tag if available
+distro=$(echo $tag | cut -d'-' -f1 | tr -d '.')
+distro=${distro:-$default_distro}
+
+# Shared volumes
+shared_home=${HOME}
+shared_misc=/misc
+shared_opt=/opt
+shared_display=:0
+
+# Set hostname to repository+distro
+hostname="${repository}${distro}"
+
+docker run --rm \
+        -it \
+        --privileged \
+        -e DISPLAY=${shared_display} \
+        -u $(id -u):$(id -g) \
+        -h ${hostname} \
+        -v /tmp/.X11-unix:/tmp/.X11-unix:rw \
+        -v /etc/passwd:/etc/passwd:ro \
+        -v /etc/group:/etc/group:ro \
+        -v /etc/shadow:/etc/shadow:ro \
+        -v /etc/sudoers.d:/etc/sudoers.d:ro \
+        -v ${shared_home}:${shared_home} \
+        -v ${shared_misc}:${shared_misc} \
+        -v ${shared_opt}:${shared_opt} \
+        -w ${PWD} \
+        ${repository}:${tag} ${cmd}

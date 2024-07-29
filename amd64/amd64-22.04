@@ -1,0 +1,173 @@
+# Dockerfile for building a cross developing environment.
+#
+# (c) 2024-2025 by neardi-dev <neardi-dev@neardi.com>
+#
+# To build the environment invoke
+#
+# $ docker build -t bionic:amd64 -f amd64/Dockerfile.bionic .
+#
+# This creates a docker image called "<distro>:<arch>". Note that it will
+# take a while if you are building this image the first time.
+#
+# Note that Docker requires a relatively recent Linux kernel.
+# 3.8 is the current minimum.
+#
+
+FROM ubuntu:22.04
+MAINTAINER neardi-dev "neardi-dev@neardi.com"
+
+ENV DEBIAN_FRONTEND=noninteractive
+ENV TZ=Asia/Shanghai
+
+#RUN echo "deb http://mirrors.163.com/ubuntu/ focal main restricted universe multiverse" > /etc/apt/sources.list
+#RUN echo "deb http://mirrors.163.com/ubuntu/ focal-security main restricted universe multiverse" >> /etc/apt/sources.list
+#RUN echo "deb http://mirrors.163.com/ubuntu/ focal-updates main restricted universe multiverse" >> /etc/apt/sources.list
+#RUN echo "deb http://mirrors.163.com/ubuntu/ focal-backports main restricted universe multiverse" >> /etc/apt/sources.list
+
+RUN apt-get update && \
+    apt-get install -y \
+       autoconf \
+       bash-completion \
+       bc \
+       binfmt-support \
+       bison \
+       build-essential \
+       ccache \
+       chrpath \
+       cmake \
+       curl \
+       cpio \
+       device-tree-compiler \
+       diffstat \
+       dosfstools \
+       expect \
+       fakeroot \
+       flex \
+       g++ \
+       g++-multilib \
+       gawk \
+       gcc \
+       gcc-multilib \
+       git \
+       gperf \
+       gnupg \
+       liblz4-tool \
+       libncurses-dev \
+       libncurses5-dev \
+       libgl1-mesa-dev \
+       libxml2-utils \
+       libssl-dev  \
+       locales \
+       lunzip \
+       make \
+       mtools \
+       net-tools \
+       parted \
+       patchelf \
+       pkg-config \
+       rsync \
+       ssh \
+       sudo  \
+       time  \
+       texinfo  \
+       unzip \
+       vim \
+       wget \
+       zip \
+       zlib1g-dev && \
+    apt-get autoclean
+
+RUN locale-gen en_US.UTF-8
+
+ENV LANG=en_US.UTF-8 \
+    LANGUAGE=en_US:en \
+    LC_ALL=en_US.UTF-8
+
+# install cross build toolchain
+#RUN apt-get install -y \
+#    crossbuild-essential-armhf \
+#    crossbuild-essential-arm64 \
+#    gcc-arm-none-eabi
+
+RUN apt-get install -y \
+        qemu-user-static \
+        live-build && \
+    apt-get autoclean
+
+# build uboot.its
+#RUN apt-get install -y \
+#        python3-pip \
+#        python-pyelftools && \
+#    apt-get autoclean
+
+# RUN pip install python-pip
+
+#RUN apt-get install -y \
+#        python && \
+#        python2 && \
+#    apt-get autoclean
+
+
+
+RUN apt-get install -y \
+        gstreamer1.0-tools \
+        gstreamer1.0-plugins-good \
+        gstreamer1.0-plugins-base \
+        gstreamer1.0-plugins-bad \
+        gstreamer1.0-plugins-ugly \
+        gstreamer1.0-libav \
+        libgstreamer1.0-dev \
+        libgstrtspserver-1.0-dev \
+        libgstreamer-plugins-base1.0-dev \
+        libgstreamer-plugins-good1.0-dev \
+    && apt-get autoclean
+
+
+#RUN apt-get install -y \
+#        libavcodec-dev \
+#        libavdevice-dev \
+#        libavfilter-dev \
+#        libavformat-dev \
+#        libavresample-dev \
+#        libavutil-dev \
+#    && apt-get autoclean
+
+#RUN apt-get install -y \
+#        qt5-default \
+#        libsdl2-dev \
+#    && apt-get autoclean
+
+
+
+########################################################################
+## use no-root user amd64
+########################################################################
+
+# create cross-build user amd64
+RUN useradd -c 'cross-build-user' -m -d /home/amd64 -s /bin/bash amd64
+RUN usermod -a -G sudo amd64
+RUN usermod -a -G dialout amd64
+RUN usermod -a -G video amd64
+
+# default username, can be override by docker run environment variables
+ENV USER=amd64 \
+    HOME=/home/amd64
+
+# Enable passwordless sudo for users under the "sudo" group
+RUN sed -i -e \
+      's/%sudo\s\+ALL=(ALL\(:ALL\)\?)\s\+ALL/%sudo ALL=NOPASSWD:ALL/g' \
+      /etc/sudoers
+
+RUN echo neardi ALL=NOPASSWD:ALL >> /etc/sudoers
+RUN echo yangyonghao ALL=NOPASSWD:ALL >> /etc/sudoers
+RUN echo wangxiaocan ALL=NOPASSWD:ALL >> /etc/sudoers
+RUN echo liukuangjie ALL=NOPASSWD:ALL >> /etc/sudoers
+RUN echo wumingfeng ALL=NOPASSWD:ALL >> /etc/sudoers
+RUN echo sundongya ALL=NOPASSWD:ALL >> /etc/sudoers
+RUN echo xiashiliang ALL=NOPASSWD:ALL >> /etc/sudoers
+RUN echo xuzhenhua ALL=NOPASSWD:ALL >> /etc/sudoers
+
+USER amd64
+
+RUN git config --global user.email "neardi-dev@neardi.com"
+RUN git config --global user.name "neardi-dev"
